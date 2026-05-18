@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Clearance Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .left, .right {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .left {
+            width: 35%;
+        }
+
+        .right {
+            width: 65%;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .result {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .result:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .green { background: #28a745; }
+        .red { background: #dc3545; }
+        .orange { background: #ffc107; color: black; }
+    </style>
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;gap:15px;align-items:center;color:white;">
+
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;">Dashboard</a>
+
+    <div id="navLinks" style="display:flex;gap:15px;"></div>
+
+    <div style="margin-left:auto;">
+        <button onclick="logout()" style="padding:5px 10px;cursor:pointer;">Logout</button>
+    </div>
+
+</nav>
+
+<h2>Admin Clearance Dashboard</h2>
+
+<div class="container">
+
+    <!-- LEFT: SEARCH -->
+    <div class="left">
+        <h3>Search Employee</h3>
+        <input id="searchBox" onkeyup="searchEmployee()" placeholder="Type name or ID...">
+        <div id="results"></div>
+    </div>
+
+    <!-- RIGHT: DETAILS -->
+    <div class="right">
+
+        <h3>Employee Info</h3>
+        <table>
+            <tbody id="empInfo"></tbody>
+        </table>
+
+        <h3>Clearance Records</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Signatory</th>
+                    <th>Status</th>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+
+            <tbody id="clearanceTable"></tbody>
+        </table>
+
+    </div>
+</div>
+
+<script>
+
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+    window.location.href = "login.html";
+}
+
+let cache = [];
+let selected = null;
+
+/* ================= LIVE SEARCH ================= */
+function searchEmployee() {
+
+    const key = document.getElementById("searchBox").value;
+
+    if (!key) {
+        document.getElementById("results").innerHTML = "";
+        return;
+    }
+
+    fetch(`http://localhost:5000/search/${key}`)
+    .then(res => res.json())
+    .then(data => {
+
+        cache = data;
+
+        let html = "";
+
+        data.forEach((emp, i) => {
+            html += `
+                <div class="result" onclick="selectEmployee(${i})">
+                    ${emp.employeelastname}, ${emp.employeename}
+                </div>
+            `;
+        });
+
+        document.getElementById("results").innerHTML = html;
+    });
+}
+
+/* ================= SELECT EMPLOYEE ================= */
+function selectEmployee(i) {
+
+    const emp = cache[i];
+    selected = emp;
+
+    document.getElementById("results").innerHTML = "";
+    document.getElementById("searchBox").value =
+        emp.employeelastname + ", " + emp.employeename;
+
+    /* EMPLOYEE INFO */
+    document.getElementById("empInfo").innerHTML = `
+        <tr><td>Employee No</td><td>${emp.employeenumber}</td></tr>
+        <tr><td>Name</td><td>${emp.employeename} ${emp.employeelastname}</td></tr>
+        <tr><td>Department</td><td>${emp.department}</td></tr>
+        <tr><td>Intent</td><td>${emp.intent}</td></tr>
+    `;
+
+    /* CLEARANCES */
+    let rows = "";
+
+    if (!emp.clearances || emp.clearances.length === 0) {
+        rows = `<tr><td colspan="4">No clearances found</td></tr>`;
+    } else {
+
+        emp.clearances.forEach(c => {
+
+            let status = c.status || "Pending";
+            let badgeClass = "orange";
+
+            if (status === "Cleared") badgeClass = "green";
+            else if (status === "Not Cleared") badgeClass = "red";
+
+            rows += `
+                <tr>
+                    <td>${c.clearingdept}</td>
+                    <td>${c.clearingemployee}</td>
+                    <td>
+                        <span class="badge ${badgeClass}">
+                            ${status}
+                        </span>
+                    </td>
+                    <td>${c.comments || ""}</td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById("clearanceTable").innerHTML = rows;
+}
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+/* ================= LOGOUT (FIXED) ================= */
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+/* ================= ROLE NAV ================= */
+const navLinks = document.getElementById("navLinks");
+
+let links = "";
+
+/* ADMIN */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher Reg</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">User Reg</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance Admin</a>
+    `;
+}
+
+/* SIGNATORY */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing Page</a>
+    `;
+}
+
+/* TEACHER */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearances</a>
+    `;
+}
+
+navLinks.innerHTML = links;
+</script>
+</body>
+</html>

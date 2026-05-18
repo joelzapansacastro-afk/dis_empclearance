@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clearing Page (Admin Control)</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .panel {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .left {
+            width: 30%;
+        }
+
+        .right {
+            width: 70%;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .result {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .result:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        select, input.comment {
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            padding: 6px 10px;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .top-title {
+            margin-bottom: 15px;
+        }
+
+        .card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    /* Table Improvements */
+    #assignedTable td, #assignedTable th {
+        padding: 10px;
+    }
+
+    /* Status badge style */
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .pending {
+        background: #ffc107;
+        color: black;
+    }
+
+    .cleared {
+        background: #28a745;
+        color: white;
+    }
+
+    .not-cleared {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Better select & input */
+    select, input {
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    /* Button improvement */
+    button {
+        background: #007bff;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+    </style>
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;gap:15px;align-items:center;color:white;">
+</nav>
+
+<div style="margin-left:auto;display:flex;gap:10px;">
+    <button onclick="logout()" style="padding:5px 10px;">Logout</button>
+</div>
+
+<div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+">
+
+    <h2 class="top-title" style="margin:0;">
+        Clearing Page
+    </h2>
+
+    <div style="
+        background:#f1f5ff;
+        padding:6px 12px;
+        border-radius:20px;
+        font-size:13px;
+        color:#333;
+    ">
+        👤 <span id="userDisplay"></span>
+    </div>
+
+</div>
+
+<div class="container">
+
+    <!-- LEFT SEARCH -->
+    <div class="panel left">
+        <h3>Search Employee</h3>
+        <input id="searchBox" onkeyup="searchEmployee()" placeholder="Search name / ID...">
+        <div id="results"></div>
+    </div>
+
+    <!-- RIGHT DETAILS -->
+    <div class="panel right">
+
+        <h3>Employee Info</h3>
+        <table>
+            <tbody id="empInfo"></tbody>
+        </table>
+
+        <h3>Clearance Management</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Signatory</th>
+                    <th>Status</th>
+                    <th>Comments</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="clearanceTable"></tbody>
+        </table>
+
+    </div>
+</div>
+
+<div class="card">
+    <h2>Teachers Assigned to Me</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Emp No</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Clearance</th>
+                <th>Status</th>
+                <th>Comments</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody id="assignedTable"></tbody>
+    </table>
+</div>
+
+<script>
+
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "signatory") {
+    window.location.href = "login.html";
+}
+
+document.getElementById("userDisplay").textContent =
+    user.name + " (" + user.role + ")";
+
+let cache = [];
+let selected = null;
+
+/* ================= SEARCH ================= */
+function searchEmployee() {
+
+    const key = document.getElementById("searchBox").value;
+
+    fetch(`http://localhost:5000/search/${key}`)
+    .then(res => res.json())
+    .then(data => {
+
+        cache = data;
+
+        let html = "";
+
+        data.forEach((emp, i) => {
+            html += `
+                <div class="result" onclick="selectEmployee(${i})">
+                    ${emp.employeelastname}, ${emp.employeename}
+                </div>
+            `;
+        });
+
+        document.getElementById("results").innerHTML = html;
+    });
+}
+
+/* ================= SELECT EMPLOYEE ================= */
+function selectEmployee(i) {
+
+    const emp = cache[i];
+    selected = emp;
+
+    document.getElementById("searchBox").value =
+        emp.employeelastname + ", " + emp.employeename;
+
+    document.getElementById("results").innerHTML = "";
+
+    /* EMP INFO */
+    document.getElementById("empInfo").innerHTML = `
+        <tr><td>Employee No</td><td>${emp.employeenumber}</td></tr>
+        <tr><td>Name</td><td>${emp.employeename} ${emp.employeelastname}</td></tr>
+        <tr><td>Department</td><td>${emp.department}</td></tr>
+        <tr><td>Intent</td><td>${emp.intent}</td></tr>
+    `;
+
+    renderClearances(emp);
+}
+
+/* ================= RENDER CLEARANCES ================= */
+/*
+function renderClearances(emp) {
+
+    let rows = "";
+
+    if (!emp.clearances || emp.clearances.length === 0) {
+        rows = `<tr><td colspan="5">No clearances found</td></tr>`;
+    } else {
+
+        emp.clearances.forEach((c, index) => {
+
+            rows += `
+                <tr>
+                    <td>${c.clearingdept}</td>
+                    <td>${c.clearingemployee}</td>
+
+                    <td>
+                        <select id="status-${index}">
+                            <option ${c.status === "Pending" ? "selected" : ""}>Pending</option>
+                            <option ${c.status === "Cleared" ? "selected" : ""}>Cleared</option>
+                            <option ${c.status === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input class="comment" id="comment-${index}" value="${c.comments || ""}">
+                    </td>
+
+                    <td>
+                        <button onclick="save(${index})">Save</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById("clearanceTable").innerHTML = rows;
+}
+*/
+
+function renderClearances(emp) {
+
+    const signatoryName = user.name.toUpperCase();
+
+    let rows = "";
+
+    // 🔥 FILTER ONLY ASSIGNED CLEARANCES
+    const myClearances = (emp.clearances || []).filter(c =>
+        c.clearingemployee.toUpperCase() === signatoryName
+    );
+
+    if (myClearances.length === 0) {
+        rows = `<tr><td colspan="5">No assigned clearances</td></tr>`;
+    } else {
+
+        myClearances.forEach((c, index) => {
+
+            rows += `
+                <tr>
+                    <td>${c.clearingdept}</td>
+                    <td>${c.clearingemployee}</td>
+
+                    <td>
+                        <select id="status-${index}">
+                            <option ${c.status === "Pending" ? "selected" : ""}>Pending</option>
+                            <option ${c.status === "Cleared" ? "selected" : ""}>Cleared</option>
+                            <option ${c.status === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input class="comment" id="comment-${index}" value="${c.comments || ""}">
+                    </td>
+
+                    <td>
+                        <button onclick="save(${index})">Save</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById("clearanceTable").innerHTML = rows;
+}
+
+/* ================= SAVE ================= */
+/*
+function save(index) {
+
+    const emp = selected;
+
+    const updated = emp.clearances.map((c, i) => {
+
+        if (i === index) {
+            return {
+                ...c,
+                status: document.getElementById(`status-${index}`).value,
+                comments: document.getElementById(`comment-${index}`).value
+            };
+        }
+
+        return c;
+    });
+
+    fetch(`http://localhost:5000/update/${emp._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...emp,
+            clearances: updated
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        selectEmployee(cache.findIndex(x => x._id === emp._id));
+    });
+}
+*/ 
+
+function save(index) {
+
+    const emp = selected;
+    const signatoryName = user.name.toUpperCase();
+
+    const updated = emp.clearances.map(c => {
+
+        if (c.clearingemployee.toUpperCase() === signatoryName) {
+
+            // find matching filtered index
+            const filtered = emp.clearances.filter(x =>
+                x.clearingemployee.toUpperCase() === signatoryName
+            );
+
+            const target = filtered[index];
+
+            if (c._id === target._id) {
+                return {
+                    ...c,
+                    status: document.getElementById(`status-${index}`).value,
+                    comments: document.getElementById(`comment-${index}`).value
+                };
+            }
+        }
+
+        return c;
+    });
+
+    fetch(`http://localhost:5000/update/${emp._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...emp,
+            clearances: updated
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        selectEmployee(cache.findIndex(x => x._id === emp._id));
+    });
+}
+
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+const navbar = document.getElementById("navbar");
+
+let links = `
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;">Dashboard</a>
+`;
+
+/* ================= ADMIN ================= */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher Reg</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">User Reg</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance Admin</a>
+    `;
+}
+
+/* ================= SIGNATORY ================= */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing Page</a>
+        
+    `;
+}
+
+/* ================= TEACHER ================= */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearances</a>
+    `;
+}
+
+navbar.innerHTML = links;
+/*
+function loadAssignedTeachers() {
+
+    fetch(`http://localhost:5000/teachersBySignatory/${user.name}`)
+    .then(res => res.json())
+    .then(data => {
+
+        let rows = "";
+        let index = 0;
+
+        data.forEach(t => {
+
+            t.clearances.forEach(c => {
+
+                if (c.clearingemployee === user.name) {
+
+                    rows += `
+                    <tr>
+                        <td>${t.employeenumber}</td>
+                        <td>${t.employeename} ${t.employeelastname}</td>
+                        <td>${t.department}</td>
+                        <td>${c.clearingdept}</td>
+
+                        <td>
+                            <select id="status-${index}">
+                                <option ${c.status === "Pending" ? "selected" : ""}>Pending</option>
+                                <option ${c.status === "Cleared" ? "selected" : ""}>Cleared</option>
+                                <option ${c.status === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
+                            </select>
+                        </td>
+
+                        <td>
+                            <input id="comment-${index}" value="${c.comments || ""}">
+                        </td>
+
+                        <td>
+                            <button onclick="updateAssigned(${index}, '${t._id}', '${c.clearingdept}')">
+                                Update
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+
+                    index++;
+                }
+            });
+        });
+
+        document.getElementById("assignedTable").innerHTML = rows;
+    });
+}
+*/ 
+function loadAssignedTeachers() {
+
+    fetch(`http://localhost:5000/teachersBySignatory/${user.name}`)
+    .then(res => res.json())
+    .then(data => {
+
+        let rows = "";
+        let index = 0;
+
+        data
+        .sort((a, b) => {
+
+            const nameA =
+                `${a.employeelastname} ${a.employeename}`.toLowerCase();
+
+            const nameB =
+                `${b.employeelastname} ${b.employeename}`.toLowerCase();
+
+            return nameA.localeCompare(nameB);
+        })
+
+        .forEach(t => {
+
+            t.clearances.forEach(c => {
+
+                if (c.clearingemployee === user.name) {
+
+                    rows += `
+                    <tr>
+                        <td>${t.employeenumber}</td>
+                        <td>${t.employeelastname}, ${t.employeename}</td>
+                        <td>${t.department}</td>
+                        <td>${c.clearingdept}</td>
+
+                        <td>
+                            <select id="status-${index}">
+                                <option ${c.status === "Pending" ? "selected" : ""}>Pending</option>
+                                <option ${c.status === "Cleared" ? "selected" : ""}>Cleared</option>
+                                <option ${c.status === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
+                            </select>
+                        </td>
+
+                        <td>
+                            <input id="comment-${index}" value="${c.comments || ""}">
+                        </td>
+
+                        <td>
+                            <button onclick="updateAssigned(${index}, '${t._id}', '${c.clearingdept}')">
+                                Update
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+
+                    index++;
+                }
+            });
+        });
+
+        document.getElementById("assignedTable").innerHTML = rows;
+    });
+}
+
+
+function updateAssigned(index, teacherId, dept) {
+
+    const status = document.getElementById(`status-${index}`).value;
+    const comments = document.getElementById(`comment-${index}`).value;
+
+    fetch("http://localhost:5000/updateClearanceBySignatory", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            teacherId,
+            dept,
+            signatory: user.name,
+            status,
+            comments
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        loadAssignedTeachers(); // refresh table
+    });
+}
+
+loadAssignedTeachers();
+</script>
+
+</body>
+</html>

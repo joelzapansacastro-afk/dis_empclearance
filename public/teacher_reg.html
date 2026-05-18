@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Registration</title>
+
+<style>
+    body {
+        font-family: "Segoe UI", Arial;
+        background: #eef2f7;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h2 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        transition: 0.2s;
+    }
+
+    input:focus, select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 3px rgba(0,123,255,0.3);
+    }
+
+    .row {
+        display: flex;
+        gap: 10px;
+    }
+
+    .clearance-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        color: black;
+    }
+
+    .btn-small {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    th {
+        background: #007bff;
+        color: white;
+        padding: 10px;
+    }
+
+    td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    tr:nth-child(even) {
+        background: #f9f9f9;
+    }
+
+    tr:hover {
+        background: #f1f7ff;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: #ddd;
+        margin: 20px 0;
+    }
+
+    .section-title {
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #444;
+    }
+
+    table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* 🔥 forces equal column widths */
+    }
+
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+        word-wrap: break-word;
+    }
+
+    /* 🔥 FIX INPUT INSIDE TABLE */
+    td input, td select {
+        width: 100%;
+        box-sizing: border-box; /* prevents overflow */
+        padding: 6px;
+        font-size: 13px;
+    }
+
+    /* Optional: cleaner look */
+    td input {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    td select {
+        border-radius: 4px;
+    }
+
+    tr:hover {
+    background: #f1f5ff;
+    }
+
+    th {
+        background: #007bff;
+        color: white;
+        font-weight: 600;
+    }
+
+    button {
+        padding: 6px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;align-items:center;color:white;gap:15px;">
+
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;font-weight:bold;">
+        Dashboard
+    </a>
+
+    <div id="navLinks" style="display:flex;gap:15px;"></div>
+
+    <div style="margin-left:auto;">
+        <button onclick="logout()" style="
+            padding:6px 12px;
+            border:none;
+            border-radius:6px;
+            background:#dc3545;
+            color:white;
+            cursor:pointer;
+        ">
+            Logout
+        </button>
+    </div>
+
+</nav>
+
+<div class="container">
+
+    <!-- TEACHER FORM -->
+    <div class="card">
+        <h2>Teacher Registration</h2>
+
+        <input id="empno" placeholder="Employee Number">
+        <input id="lname" placeholder="Last Name">
+        <input id="fname" placeholder="First Name">
+        <input id="dept" placeholder="Department">
+        <input id="intent" placeholder="Intent">
+
+        <hr>
+
+        <div class="section-title">Clearance Departments</div>
+
+        <div id="clearanceContainer"></div>
+
+        <button class="btn-success" onclick="addClearance()">+ Add Clearance</button>
+
+        <br><br>
+
+        <button class="btn-primary" onclick="save()">SAVE TEACHER</button>
+    </div>
+
+    <h3>Bulk Upload (Excel File)</h3>
+
+    <button class="btn-success" onclick="downloadExcelTemplate()">
+        Download Excel Template
+    </button>
+
+    <input type="file" id="excelFile" accept=".xlsx,.xls" />
+    <button class="btn-primary" onclick="uploadExcel()">Upload Excel</button>
+
+    <p style="font-size:12px;color:gray;">
+    Format: empno, lastname, firstname, department, intent, clearanceDept, signatory
+    </p>
+
+    <!-- SEARCH -->
+    <div class="card">
+        <h2>Search Teacher</h2>
+
+        <input id="searchBox" placeholder="Search by name or employee number..." onkeyup="searchTeacher()">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Emp No</th>
+                    <th>Last Name</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Intent</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="resultTable"></tbody>
+        </table>
+    </div>
+
+    <!-- CLEARANCES -->
+    <div class="card">
+        <h2>Clearances</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Signatory</th>
+                    <th>Status</th>
+                    <th>Comments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="clearanceTable"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+    window.location.href = "login.html";
+}
+
+let selectedTeacher = null;
+
+function addClearance(dept = "", employee = "") {
+
+    const div = document.createElement("div");
+    div.classList.add("clearance-row");
+
+    div.innerHTML = `
+        <input class="dept" placeholder="Department" value="${dept}">
+        <input class="employee" placeholder="Signatory" value="${employee}">
+        <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
+    `;
+
+    document.getElementById("clearanceContainer").appendChild(div);
+}
+
+/* build payload matching MongoDB schema */
+function getFormData() {
+
+    const clearances = [];
+
+    document.querySelectorAll(".clearance-row").forEach(row => {
+
+        const dept = row.querySelector(".dept").value;
+        const employee = row.querySelector(".employee").value;
+
+        if (dept && employee) {
+            clearances.push({
+                clearingdept: dept,
+                clearingemployee: employee,
+                status: "Pending",
+                comments: ""
+            });
+        }
+    });
+
+    return {
+        employeenumber: document.getElementById("empno").value,
+        employeelastname: document.getElementById("lname").value,
+        employeename: document.getElementById("fname").value,
+        department: document.getElementById("dept").value,
+        intent: document.getElementById("intent").value,
+        clearances
+    };
+}
+
+/* SAVE */
+function save() {
+
+    const data = getFormData();
+
+    fetch("http://localhost:5000/addTeacher", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+
+        // reset form
+        document.querySelectorAll("input").forEach(i => i.value = "");
+        document.getElementById("clearanceContainer").innerHTML = "";
+    })
+    .catch(err => console.log(err));
+}
+
+
+let editId = null;
+let cache = [];
+
+/* ================= SEARCH ================= */
+/*
+function searchTeacher() {
+
+    const key = document.getElementById("searchBox").value;
+
+    fetch(`http://localhost:5000/search/${key}`)
+    .then(res => res.json())
+    .then(data => {
+
+        cache = data;
+
+        let rows = "";
+
+        data.forEach((t, i) => {
+
+            rows += `
+            <tr>
+                <td><input value="${t.employeenumber}" id="empno-${i}"></td>
+                <td><input value="${t.employeelastname}" id="lname-${i}"></td>
+                <td><input value="${t.employeename}" id="fname-${i}"></td>
+                <td><input value="${t.department}" id="dept-${i}"></td>
+                <td><input value="${t.intent}" id="intent-${i}"></td>
+
+                <td>
+                    <button onclick="updateTeacher('${t._id}', ${i})">Update</button>
+                    <button onclick="deleteTeacher('${t._id}')">Delete</button>
+                </td>
+            </tr>
+            `;
+        });
+
+        document.getElementById("resultTable").innerHTML = rows;
+    });
+}
+*/ 
+
+//let cache = [];
+
+/* ================= SEARCH ================= */
+function searchTeacher() {
+
+    const key = document.getElementById("searchBox").value;
+
+    fetch(`http://localhost:5000/search/${key}`)
+    .then(res => res.json())
+    .then(data => {
+
+        cache = data;
+
+        let rows = "";
+
+        data.forEach((t, i) => {
+
+            rows += `
+            <tr>
+                <td><input value="${t.employeenumber}" id="empno-${i}"></td>
+                <td><input value="${t.employeelastname}" id="lname-${i}"></td>
+                <td><input value="${t.employeename}" id="fname-${i}"></td>
+                <td><input value="${t.department}" id="dept-${i}"></td>
+                <td><input value="${t.intent}" id="intent-${i}"></td>
+
+                <td>
+                    <button onclick="viewClearances(${i})">View Clearances</button>
+                    <button onclick="updateTeacher('${t._id}', ${i})">Update</button>
+                    <button onclick="deleteTeacher('${t._id}')">Delete</button>
+                </td>
+            </tr>
+            `;
+        });
+
+        document.getElementById("resultTable").innerHTML = rows;
+    });
+}
+
+
+/* ================= UPDATE ================= */
+function updateTeacher(id, i) {
+
+    const payload = {
+        employeenumber: document.getElementById(`empno-${i}`).value,
+        employeelastname: document.getElementById(`lname-${i}`).value,
+        employeename: document.getElementById(`fname-${i}`).value,
+        department: document.getElementById(`dept-${i}`).value,
+        intent: document.getElementById(`intent-${i}`).value,
+        clearances: cache[i].clearances
+    };
+
+    fetch(`http://localhost:5000/update/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        searchTeacher();
+    });
+}
+
+/* ================= DELETE ================= */
+function deleteTeacher(id) {
+
+    if (!confirm("Delete this teacher?")) return;
+
+    fetch(`http://localhost:5000/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        searchTeacher();
+    });
+}
+
+/*
+function viewClearances(index) {
+
+    const emp = cache[index];
+
+    let rows = "";
+
+    if (!emp.clearances || emp.clearances.length === 0) {
+        rows = `<tr><td colspan="4">No clearances found</td></tr>`;
+    } else {
+
+        emp.clearances.forEach(c => {
+
+            rows += `
+            <tr>
+                <td>${c.clearingdept}</td>
+                <td>${c.clearingemployee}</td>
+                <td>${c.status}</td>
+                <td>${c.comments || ""}</td>
+            </tr>
+            `;
+        });
+    }
+
+    document.getElementById("clearanceTable").innerHTML = rows;
+}
+*/
+
+function viewClearances(index) {
+
+    const emp = cache[index];
+    selectedTeacher = emp; // store selected teacher globally
+
+    let rows = "";
+
+    if (!emp.clearances || emp.clearances.length === 0) {
+        rows = `<tr><td colspan="5">No clearances found</td></tr>`;
+    } else {
+
+        emp.clearances.forEach((c, i) => {
+
+            rows += `
+            <tr>
+                <td>${c.clearingdept}</td>
+                <td>${c.clearingemployee}</td>
+
+                <td>
+                    <select id="status-${i}">
+                        <option value="Pending" ${c.status === "Pending" ? "selected" : ""}>Pending</option>
+                        <option value="Cleared" ${c.status === "Cleared" ? "selected" : ""}>Cleared</option>
+                        <option value="Not Cleared" ${c.status === "Not Cleared" ? "selected" : ""}>Not Cleared</option>
+                    </select>
+                </td>
+
+                <td>
+                    <input id="comment-${i}" value="${c.comments || ""}">
+                </td>
+
+                <td>
+                    <button onclick="updateClearance(${i})">Update</button>
+                    <button onclick="deleteClearance(${i})">Delete</button>
+                </td>
+            </tr>
+            `;
+        });
+    }
+
+    document.getElementById("clearanceTable").innerHTML = rows;
+}
+
+function updateClearance(i) {
+
+    const t = selectedTeacher;
+
+    const updatedClearances = t.clearances.map((c, index) => {
+
+        if (index === i) {
+            return {
+                ...c,
+                status: document.getElementById(`status-${i}`).value,
+                comments: document.getElementById(`comment-${i}`).value
+            };
+        }
+
+        return c;
+    });
+
+    fetch(`http://localhost:5000/update/${t._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...t,
+            clearances: updatedClearances
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        viewClearances(cache.findIndex(x => x._id === t._id));
+    });
+}
+
+function deleteClearance(i) {
+
+    const t = selectedTeacher;
+
+    if (!confirm("Delete this clearance?")) return;
+
+    const updatedClearances = t.clearances.filter((_, index) => index !== i);
+
+    fetch(`http://localhost:5000/update/${t._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...t,
+            clearances: updatedClearances
+        })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        viewClearances(cache.findIndex(x => x._id === t._id));
+    });
+}
+
+
+/* add one default clearance row */
+addClearance();
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+/* ================= LOGOUT ================= */
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+/* ================= NAVBAR ================= */
+const navLinks = document.getElementById("navLinks");
+
+let links = "";
+
+/* ADMIN LINKS */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">Users</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance</a>
+    `;
+}
+
+/* SIGNATORY LINKS */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing</a>
+    `;
+}
+
+/* TEACHER LINKS */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearance</a>
+    `;
+}
+
+navLinks.innerHTML = links;
+
+function uploadExcel() {
+
+    const file = document.getElementById("excelFile").files[0];
+
+    if (!file) {
+        alert("Please select an Excel file");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("http://localhost:5000/bulkUploadExcel", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+    })
+    .catch(err => console.log(err));
+}
+
+function downloadExcelTemplate() {
+
+    const data = [
+        ["1001", "Smith", "John", "HR", "Resignation", "HR", "Jane Doe"],
+        ["1001", "Smith", "John", "HR", "Resignation", "Finance", "Mark Lee"],
+        ["1002", "Cruz", "Anna", "IT", "Transfer", "IT", "Juan Reyes"]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([
+        ["EmployeeNo", "LastName", "FirstName", "Department", "Intent", "ClearanceDept", "Signatory"],
+        ...data
+    ]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TeachersTemplate");
+
+    XLSX.writeFile(wb, "teacher_upload_template.xlsx");
+}
+
+</script>
+
+</body>
+</html>

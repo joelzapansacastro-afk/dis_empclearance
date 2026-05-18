@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Page</title>
+
+<style>
+    body {
+        font-family: "Segoe UI", Arial;
+        background: #eef2f7;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        max-width: 900px;
+        margin: auto;
+    }
+
+    h2 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    th {
+        background: #007bff;
+        color: white;
+        padding: 12px;
+        text-align: center;
+    }
+
+    td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+    }
+
+    tr:hover {
+        background: #f5f9ff;
+    }
+
+    /* STATUS BADGES */
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .pending {
+        background: #ffc107;
+        color: black;
+    }
+
+    .cleared {
+        background: #28a745;
+        color: white;
+    }
+
+    .not-cleared {
+        background: #dc3545;
+        color: white;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 20px;
+        color: gray;
+    }
+
+    .download-btn{
+    background:#28a745;
+    color:white;
+    padding:10px 15px;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:14px;
+    font-weight:bold;
+    display:inline-block;
+    }
+
+    .download-btn:hover{
+        background:#218838;
+    }
+</style>
+
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;gap:15px;align-items:center;color:white;">
+</nav>
+
+<div style="margin-left:auto;display:flex;gap:10px;">
+    <button onclick="logout()" style="padding:5px 10px;">Logout</button>
+</div>
+
+
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        
+        <h2 style="margin:0;">My Clearance</h2>
+
+    <div style="
+        background:#f1f5ff;
+        padding:6px 12px;
+        border-radius:20px;
+        font-size:13px;
+        color:#333;
+    ">
+        👤 <span id="userDisplay"></span>
+    </div>
+
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Department</th>
+                <th>Signatory</th>
+                <th>Status</th>
+                <th>Comments</th>
+            </tr>
+        </thead>
+        <tbody id="table"></tbody>
+    </table>
+</div>
+
+<div style="margin-bottom:15px;">
+    <hr>
+    <h3 style="margin-bottom:10px;color:#333;text-align:center;"><B>CLEARANCE REQUIREMENTS/FORMS</B></h3>
+    <h3 style="margin-bottom:10px;color:#333;text-align:center;">Returning</h3>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px;">
+
+        <a href="forms/r_primary_teachers.pdf" id="rPrimaryTeachers" target="_blank" class="download-btn">
+            ⬇ R Primary Teachers
+        </a>
+
+        <a href="forms/r_secondary_teachers.pdf" id="rSecondaryTeachers" target="_blank" class="download-btn">
+            ⬇ R Secondary Teachers
+        </a>
+
+        <a href="forms/r_primary_ta.pdf" id="rPrimaryTA" target="_blank" class="download-btn">
+            ⬇ R Primary TA
+        </a>
+
+        <a href="forms/r_guidance.pdf" id="rGuidance" target="_blank" class="download-btn">
+            ⬇ R Guidance
+        </a>
+
+        <a href="forms/r_learning_support.pdf" id="rLearningSupport" target="_blank" class="download-btn">
+            ⬇ R Learning Support
+        </a>
+
+    </div>
+
+    <h3 style="margin-bottom:10px;color:#333;text-align:center;">Non-Returning</h3>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px;">
+
+        <a href="forms/nr_primary_teachers.pdf" id="nrPrimaryTeachers" target="_blank" class="download-btn">
+            ⬇ NR Primary Teachers
+        </a>
+
+        <a href="forms/nr_secondary_teachers.pdf" id="nrSecondaryTeachers" target="_blank" class="download-btn">
+            ⬇ NR Secondary Teachers
+        </a>
+
+        <a href="forms/nr_guidance.pdf" id="nrGuidance" target="_blank" class="download-btn">
+            ⬇ NR Guidance
+        </a>
+
+        <a href="forms/nr_learning_support.pdf" id="nrLearningSupport" target="_blank" class="download-btn">
+            ⬇ NR Learning Support
+        </a>
+
+    </div>
+
+</div>
+
+<table>
+
+
+<script>
+
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "teacher") {
+    window.location.href = "login.html";
+}
+
+document.getElementById("userDisplay").textContent =
+    user.name + " (" + user.username + ")";
+/* LOAD MY DATA */
+/*
+fetch(`http://localhost:5000/getTeacherByEmpNo/${user.username}`)
+.then(res => res.json())
+.then(emp => {
+
+    let rows = "";
+
+    (emp.clearances || []).forEach(c => {
+
+        rows += `
+        <tr>
+            <td>${c.clearingdept}</td>
+            <td>${c.clearingemployee}</td>
+            <td>${c.status}</td>
+            <td>${c.comments || ""}</td>
+        </tr>`;
+    });
+
+    document.getElementById("table").innerHTML = rows;
+});
+*/
+
+fetch(`http://localhost:5000/getTeacherByEmpNo/${user.username}`)
+.then(res => res.json())
+.then(emp => {
+
+    let rows = "";
+
+    if (!emp || !emp.clearances || emp.clearances.length === 0) {
+        rows = `<tr><td colspan="4" class="empty">No clearance records found</td></tr>`;
+    } else {
+
+        emp.clearances.forEach(c => {
+
+            let statusClass = "pending";
+
+            if (c.status === "Cleared") statusClass = "cleared";
+            if (c.status === "Not Cleared") statusClass = "not-cleared";
+
+            rows += `
+            <tr>
+                <td>${c.clearingdept}</td>
+                <td>${c.clearingemployee}</td>
+                <td>
+                    <span class="badge ${statusClass}">
+                        ${c.status}
+                    </span>
+                </td>
+                <td>${c.comments || "-"}</td>
+            </tr>`;
+        });
+    }
+
+    document.getElementById("table").innerHTML = rows;
+});
+
+
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+const navbar = document.getElementById("navbar");
+
+let links = `
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;">Dashboard</a>
+`;
+
+/* ================= ADMIN ================= */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher Reg</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">User Reg</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance Admin</a>
+    `;
+}
+
+/* ================= SIGNATORY ================= */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing Page</a>
+    `;
+}
+
+/* ================= TEACHER ================= */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearances</a>
+    `;
+}
+
+navbar.innerHTML = links;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+            border-radius: 5px;
+        }
+
+        .save {
+            background: #007bff;
+            color: white;
+        }
+
+        .update {
+            background: green;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 5px 8px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            border-radius: 4px;
+        }
+
+        .edit {
+            background: orange;
+        }
+
+        .delete {
+            background: red;
+        }
+    </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;gap:15px;align-items:center;color:white;">
+</nav>
+
+<div style="margin-left:auto;display:flex;gap:10px;">
+    <button onclick="logout()" style="padding:5px 10px;">Logout</button>
+</div>
+
+<div class="container">
+
+<!-- ================= USER FORM ================= -->
+<div class="card">
+    <h2>User Registration</h2>
+
+    <input id="username" placeholder="Username">
+    <input id="name" placeholder="Full Name">
+    <input id="password" type="password" placeholder="Password">
+
+    <select id="role">
+        <option value="teacher">teacher</option>
+        <option value="signatory">signatory</option>
+        <option value="admin">admin</option>
+    </select>
+
+    <button class="save" onclick="saveUser()">SAVE USER</button>
+    <button class="update" onclick="updateUser()">UPDATE USER</button>
+</div>
+
+<h3>Bulk User Upload</h3>
+
+    <button class="save" onclick="downloadUserTemplate()">
+        Download Excel Template
+    </button>
+
+    <br><br>
+
+    <input type="file" id="excelUserFile" accept=".xlsx,.xls">
+    <button class="update" onclick="uploadUsersExcel()">
+        Upload Excel
+    </button>
+
+    <p style="font-size:12px;color:gray;">
+    Format: username, name, password, role
+    </p>
+
+<!-- ================= SEARCH ================= -->
+<div class="card">
+    <h2>Search User</h2>
+
+    <input id="searchBox" onkeyup="searchUser()" placeholder="Search username...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+</div>
+
+<script>
+
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+    window.location.href = "login.html";
+}
+
+let cache = [];
+let selectedId = null;
+
+/* ================= SAVE USER ================= */
+function saveUser() {
+
+    const data = {
+        username: document.getElementById("username").value,
+        name: document.getElementById("name").value,
+        password: document.getElementById("password").value,
+        role: document.getElementById("role").value
+    };
+
+    fetch("http://localhost:5000/addUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        searchUser();
+        clearForm();
+    })
+    .catch(err => console.log(err));
+}
+
+/* ================= SEARCH USER ================= */
+function searchUser() {
+
+    const key = document.getElementById("searchBox").value;
+
+    fetch(`http://localhost:5000/searchUser/${key}`)
+    .then(res => res.json())
+    .then(data => {
+
+        cache = data;
+
+        let html = "";
+
+        data.forEach((u, i) => {
+
+            html += `
+                <tr>
+                    <td>${u.username}</td>
+                    <td>${u.name}</td>
+                    <td>${u.role}</td>
+                    <td>
+                        <button class="btn edit" onclick="editUser(${i})">Edit</button>
+                        <button class="btn delete" onclick="deleteUser('${u._id}')">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById("tableBody").innerHTML = html;
+    })
+    .catch(err => console.log(err));
+}
+
+/* ================= EDIT USER ================= */
+function editUser(i) {
+
+    const u = cache[i];
+    selectedId = u._id;
+
+    document.getElementById("username").value = u.username;
+    document.getElementById("name").value = u.name;
+    document.getElementById("password").value = u.password;
+    document.getElementById("role").value = u.role;
+}
+
+/* ================= UPDATE USER ================= */
+function updateUser() {
+
+    if (!selectedId) {
+        alert("Please select a user first");
+        return;
+    }
+
+    const data = {
+        username: document.getElementById("username").value,
+        name: document.getElementById("name").value,
+        password: document.getElementById("password").value,
+        role: document.getElementById("role").value
+    };
+
+    fetch(`http://localhost:5000/updateUser/${selectedId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        searchUser();
+        clearForm();
+    })
+    .catch(err => console.log(err));
+}
+
+/* ================= DELETE USER ================= */
+function deleteUser(id) {
+
+    fetch(`http://localhost:5000/deleteUser/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        searchUser();
+    })
+    .catch(err => console.log(err));
+}
+
+/* ================= CLEAR FORM ================= */
+function clearForm() {
+    document.getElementById("username").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("role").value = "teacher/staff";
+    selectedId = null;
+}
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+const navbar = document.getElementById("navbar");
+
+let links = `
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;">Dashboard</a>
+`;
+
+/* ================= ADMIN ================= */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher Reg</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">User Reg</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance Admin</a>
+    `;
+}
+
+/* ================= SIGNATORY ================= */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing Page</a>
+    `;
+}
+
+/* ================= TEACHER ================= */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearances</a>
+    `;
+}
+
+navbar.innerHTML = links;
+
+
+function downloadUserTemplate() {
+
+    const data = [
+        ["admin1", "Admin User", "1234", "admin"],
+        ["john.staff", "John Smith", "1234", "teacher/staff"],
+        ["jane.sign", "Jane Doe", "1234", "signatory"]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([
+        ["Username", "Name", "Password", "Role"],
+        ...data
+    ]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "UsersTemplate");
+
+    XLSX.writeFile(wb, "user_upload_template.xlsx");
+}
+
+
+function uploadUsersExcel() {
+
+    const file = document.getElementById("excelUserFile").files[0];
+
+    if (!file) {
+        alert("Please select an Excel file");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        const users = [];
+
+        rows.forEach((row, index) => {
+
+            if (index === 0) return; // skip header
+            if (!row || row.length < 4) return;
+
+            users.push({
+                username: row[0],
+                name: row[1],
+                password: row[2],
+                role: row[3]
+            });
+        });
+
+        fetch("http://localhost:5000/bulkAddUsers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ users })
+        })
+        .then(res => res.text())
+        .then(msg => {
+            alert(msg);
+            searchUser();
+        });
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+</script>
+
+</body>
+</html>

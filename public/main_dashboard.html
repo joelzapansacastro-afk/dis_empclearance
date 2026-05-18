@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Main Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: #007bff;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .userbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .username {
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            border: none;
+            padding: 8px 12px;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* MAIN */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+        }
+
+        .card button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .card button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+// ❌ If not logged in → go login
+if (!user) {
+    window.location.href = "login.html";
+}
+</script>
+
+<script>
+const path = window.location.pathname;
+
+/* ================= ROLE RULES ================= */
+
+const access = {
+    admin: [
+        "main_dashboard.html",
+        "teacher_reg.html",
+        "user_reg.html",
+        "clearance_admindash.html"
+    ],
+    signatory: [
+        "clearing_page.html",
+        "clearance_dash.html"
+    ],
+    teacher: [
+        "teacher_page.html"
+    ]
+};
+
+const allowedPages = access[user.role] || [];
+
+const currentPage = path.split("/").pop();
+
+if (!allowedPages.includes(currentPage)) {
+    alert("Access denied for your role.");
+    window.location.href = allowedPages[0]; // redirect to first allowed page
+}
+</script>
+
+<nav id="navbar" style="background:#007bff;padding:10px;display:flex;gap:15px;align-items:center;color:white;">
+</nav>
+
+
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="title">Main Dashboard</div>
+
+    <div class="userbox">
+        <span class="role" id="roleBadge">Role</span>
+        <span class="username" id="usernameText">User</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+    <div class="grid">
+
+        <!-- CLEARANCE DASHBOARD -->
+        <div class="card">
+            <h3>Clearance Dashboard</h3>
+            <p>View and manage all employee clearances</p>
+            <button onclick="go('clearance_admindash.html')">Open</button>
+        </div>
+
+        <!-- TEACHER REG -->
+        <div class="card">
+            <h3>Teacher Registration</h3>
+            <p>Add and manage employee records</p>
+            <button onclick="go('teacher_reg.html')">Open</button>
+        </div>
+
+        <!-- USER REG -->
+        <div class="card">
+            <h3>User Management</h3>
+            <p>Create and manage system users</p>
+            <button onclick="go('user_reg.html')">Open</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+    window.location.href = "login.html";
+}
+
+/* LOAD USER */
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+/* DISPLAY USER */
+document.getElementById("usernameText").innerText = user.username;
+document.getElementById("roleBadge").innerText = user.role;
+
+/* NAVIGATION */
+function go(page) {
+    window.location.href = page;
+}
+
+/* LOGOUT */
+function logout() {
+    localStorage.removeItem("user");
+    sessionStorage.clear(); // extra safety
+
+    window.location.replace("login.html");
+}
+
+</script>
+
+<script>
+//const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "login.html";
+}
+
+function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+}
+
+const navbar = document.getElementById("navbar");
+
+let links = `
+    <a href="main_dashboard.html" style="color:white;text-decoration:none;">Dashboard</a>
+`;
+
+/* ================= ADMIN ================= */
+if (user.role === "admin") {
+    links += `
+        <a href="teacher_reg.html" style="color:white;text-decoration:none;">Teacher Reg</a>
+        <a href="user_reg.html" style="color:white;text-decoration:none;">User Reg</a>
+        <a href="clearance_admindash.html" style="color:white;text-decoration:none;">Clearance Admin</a>
+    `;
+}
+
+/* ================= SIGNATORY ================= */
+else if (user.role === "signatory") {
+    links += `
+        <a href="clearing_page.html" style="color:white;text-decoration:none;">Clearing Page</a>
+    `;
+}
+
+/* ================= TEACHER ================= */
+else if (user.role === "teacher") {
+    links += `
+        <a href="teacher_page.html" style="color:white;text-decoration:none;">My Clearances</a>
+    `;
+}
+
+navbar.innerHTML = links;
+</script>
+
+</body>
+</html>
