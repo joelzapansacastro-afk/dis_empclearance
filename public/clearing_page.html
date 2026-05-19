@@ -597,7 +597,7 @@ function loadAssignedTeachers() {
 */ 
 function loadAssignedTeachers() {
 
-    fetch(`http://localhost:5000/teachersBySignatory/${user.name}`)
+    fetch(`https://dis-empclearance.onrender.com/teachersBySignatory/${user.name}`)
     .then(res => res.json())
     .then(data => {
 

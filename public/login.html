@@ -233,7 +233,7 @@ async function login() {
 
         console.log("LOGIN REQUEST:", payload);
 
-        const res = await fetch("http://localhost:5000/login", {
+        const res = await fetch("https://dis-empclearance.onrender.com/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

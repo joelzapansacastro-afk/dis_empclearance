@@ -192,7 +192,7 @@ function searchEmployee() {
         return;
     }
 
-    fetch(`http://localhost:5000/search/${key}`)
+    fetch(`https://dis-empclearance.onrender.com/search/${key}`)
     .then(res => res.json())
     .then(data => {
 

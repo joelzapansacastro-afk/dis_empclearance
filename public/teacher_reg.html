@@ -384,7 +384,7 @@ function save() {
 
     const data = getFormData();
 
-    fetch("http://localhost:5000/addTeacher", {
+    fetch("https://dis-empclearance.onrender.com//addTeacher", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -450,7 +450,7 @@ function searchTeacher() {
 
     const key = document.getElementById("searchBox").value;
 
-    fetch(`http://localhost:5000/search/${key}`)
+    fetch(`https://dis-empclearance.onrender.com//search/${key}`)
     .then(res => res.json())
     .then(data => {
 
@@ -494,7 +494,7 @@ function updateTeacher(id, i) {
         clearances: cache[i].clearances
     };
 
-    fetch(`http://localhost:5000/update/${id}`, {
+    fetch(`https://dis-empclearance.onrender.com//update/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -511,7 +511,7 @@ function deleteTeacher(id) {
 
     if (!confirm("Delete this teacher?")) return;
 
-    fetch(`http://localhost:5000/delete/${id}`, {
+    fetch(`https://dis-empclearance.onrender.com//delete/${id}`, {
         method: "DELETE"
     })
     .then(res => res.text())
@@ -608,7 +608,7 @@ function updateClearance(i) {
         return c;
     });
 
-    fetch(`http://localhost:5000/update/${t._id}`, {
+    fetch(`https://dis-empclearance.onrender.com//update/${t._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -631,7 +631,7 @@ function deleteClearance(i) {
 
     const updatedClearances = t.clearances.filter((_, index) => index !== i);
 
-    fetch(`http://localhost:5000/update/${t._id}`, {
+    fetch(`https://dis-empclearance.onrender.com//update/${t._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -709,7 +709,7 @@ function uploadExcel() {
     const formData = new FormData();
     formData.append("file", file);
 
-    fetch("http://localhost:5000/bulkUploadExcel", {
+    fetch("https://dis-empclearance.onrender.com//bulkUploadExcel", {
         method: "POST",
         body: formData
     })

@@ -156,8 +156,8 @@ let selectedEmployee = null;
 function searchEmployee() {
 
     const key = document.getElementById("searchBox").value;
-
-    fetch(`http://localhost:5000/search/${key}`)
+//http://localhost:5000
+    fetch(`https://dis-empclearance.onrender.com/search/${key}`)
     .then(res => res.json())
     .then(data => {
 
