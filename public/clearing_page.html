@@ -289,7 +289,7 @@ function searchEmployee() {
 
     const key = document.getElementById("searchBox").value;
 
-    fetch(`http://localhost:5000/search/${key}`)
+    fetch(`https://dis-empclearance.onrender.com/search/${key}`)
     .then(res => res.json())
     .then(data => {
 
@@ -480,7 +480,7 @@ function save(index) {
         return c;
     });
 
-    fetch(`http://localhost:5000/update/${emp._id}`, {
+    fetch(`https://dis-empclearance.onrender.com/update/${emp._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -664,7 +664,7 @@ function updateAssigned(index, teacherId, dept) {
     const status = document.getElementById(`status-${index}`).value;
     const comments = document.getElementById(`comment-${index}`).value;
 
-    fetch("http://localhost:5000/updateClearanceBySignatory", {
+    fetch("https://dis-empclearance.onrender.com/updateClearanceBySignatory", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
