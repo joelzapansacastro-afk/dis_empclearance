@@ -225,7 +225,7 @@ function saveUser() {
         role: document.getElementById("role").value
     };
 
-    fetch("https://dis-empclearance.onrender.com//addUser", {
+    fetch("https://dis-empclearance.onrender.com/addUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -244,7 +244,7 @@ function searchUser() {
 
     const key = document.getElementById("searchBox").value;
 
-    fetch(`https://dis-empclearance.onrender.com//searchUser/${key}`)
+    fetch(`https://dis-empclearance.onrender.com/searchUser/${key}`)
     .then(res => res.json())
     .then(data => {
 
@@ -299,7 +299,7 @@ function updateUser() {
         role: document.getElementById("role").value
     };
 
-    fetch(`https://dis-empclearance.onrender.com//updateUser/${selectedId}`, {
+    fetch(`https://dis-empclearance.onrender.com/updateUser/${selectedId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -316,7 +316,7 @@ function updateUser() {
 /* ================= DELETE USER ================= */
 function deleteUser(id) {
 
-    fetch(`https://dis-empclearance.onrender.com//deleteUser/${id}`, {
+    fetch(`https://dis-empclearance.onrender.com/deleteUser/${id}`, {
         method: "DELETE"
     })
     .then(res => res.text())
@@ -439,7 +439,7 @@ function uploadUsersExcel() {
             });
         });
 
-        fetch("https://dis-empclearance.onrender.com//bulkAddUsers", {
+        fetch("https://dis-empclearance.onrender.com/bulkAddUsers", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ users })
